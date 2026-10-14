@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10131d">
+<title>Finora — Personal Finance</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer onload="window.dispatchEvent(new Event('turnstile-loaded'))" onerror="window.dispatchEvent(new Event('turnstile-failed'))"></script>
+<style>
+:root{--bg:#10131d;--panel:#191e2b;--panel2:#22293a;--text:#f4f6fb;--muted:#969fb3;--accent:#8b7cff;--green:#50d6a0;--red:#ff7085;--border:#30384b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:14px}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.auth-wrap{min-height:100vh;display:grid;place-items:center;padding:20px}
+.auth-card{width:100%;max-width:410px;background:var(--panel);border:1px solid var(--border);border-radius:22px;padding:27px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:23px}
+.logo-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(135deg,#a69bff,#6e5bff);font-size:23px}
+h1{letter-spacing:-.6px}
+.auth-card h1{font-size:26px;margin:27px 0 8px}
+.subtle{color:var(--muted);line-height:1.65}
+.field{display:grid;gap:7px;margin:15px 0}
+.field label{font-size:12px;font-weight:650;color:#cbd1e2}
+.field input,.field select{width:100%;padding:12px;background:#111622;border:1px solid var(--border);border-radius:11px;color:var(--text);outline:none}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.primary,.secondary,.danger{padding:12px 15px;border-radius:11px;font-weight:700}
+.primary{border:0;background:var(--accent);color:white}
+.secondary{border:1px solid var(--border);background:var(--panel2);color:var(--text)}
+.danger{border:0;background:#572b3b;color:#ffdce3}
+.full{width:100%}
+.text-button{border:0;background:transparent;color:#b3aaff;padding:6px}
+.notice{padding:12px 14px;margin:14px 0;border-radius:11px;background:#222b3b;border:1px solid var(--border);line-height:1.6}
+.notice.success{background:#12372e;color:#b8ffe0;border-color:#28644f}
+.notice.error{background:#44232d;color:#ffd1da;border-color:#773746}
+.app{max-width:1440px;margin:auto;padding:22px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:28px}
+.top-actions{display:flex;align-items:center;gap:10px}
+.user-chip{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px}
+.menu-wrap{position:relative}
+.icon-btn{width:45px;height:45px;display:grid;place-items:center;border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:13px}
+.hamburger{width:22px;display:flex;flex-direction:column;gap:5px}
+.hamburger span{display:block;width:22px;height:2px;border-radius:3px;background:currentColor}
+.dropdown{position:absolute;right:0;top:53px;width:245px;background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:7px;z-index:30;box-shadow:0 20px 50px #0008}
+.dropdown button{display:block;width:100%;text-align:left;padding:12px;border:0;border-radius:9px;background:transparent;color:var(--text)}
+.dropdown button:hover{background:var(--panel2)}
+.menu-label{padding:10px 12px 5px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.3px}
+.page-title{font-size:27px;margin:0 0 6px}
+.page-subtitle{color:var(--muted);margin:0 0 23px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:15px}
+.card{min-width:0;background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:19px}
+.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-5{grid-column:span 5}.span-6{grid-column:span 6}.span-7{grid-column:span 7}.span-8{grid-column:span 8}.span-12{grid-column:span 12}
+.stat-label{color:var(--muted);font-size:12px;margin-bottom:12px}
+.stat-value{font-size:clamp(20px,2.2vw,27px);font-weight:800;overflow-wrap:anywhere}
+.stat-foot{font-size:11px;color:var(--muted);margin-top:10px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:17px}
+.card-head h3{font-size:15px;margin:0}
+.muted{color:var(--muted)}.small{font-size:12px}
+.amount-in{color:var(--green)}.amount-out{color:var(--red)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #ffffff0c}
+.item:last-child{border-bottom:0}
+.item-main{min-width:0;flex:1}
+.item-name{font-weight:650;overflow-wrap:anywhere}
+.item-meta{font-size:11px;color:var(--muted);margin-top:5px}
+.item-right{text-align:right;flex-shrink:0}
+.progress{height:7px;background:#30384b;border-radius:99px;overflow:hidden;margin:11px 0}
+.progress>div{height:100%;background:linear-gradient(90deg,#8b7cff,#5eddb2);border-radius:99px}
+.empty{padding:25px 8px;text-align:center;color:var(--muted);line-height:1.7}
+.pill{display:inline-block;border-radius:99px;background:#2a3043;color:#cbd1e2;padding:5px 9px;font-size:11px}
+.tx-tools{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:15px}
+.tx-tools input,.tx-tools select{min-width:130px;flex:1;background:#111622;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:10px}
+.chart-bars{height:175px;display:flex;align-items:flex-end;gap:10px;padding-top:12px}
+.bar-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px}
+.bar{width:min(35px,80%);min-height:3px;border-radius:6px 6px 2px 2px}
+.bar-label{font-size:10px;color:var(--muted)}
+.form-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.modal-backdrop{position:fixed;inset:0;background:#050711d9;display:grid;place-items:center;padding:18px;z-index:100}
+.modal-card{width:100%;max-width:430px;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:21px;box-shadow:0 24px 80px #0009}
+.modal-card h2{font-size:20px;margin:0 0 8px}
+.modal-card input{width:100%;padding:13px;background:#111622;border:1px solid var(--border);border-radius:11px;color:var(--text);outline:none}
+.modal-actions{display:flex;gap:10px;margin-top:16px}
+.modal-actions button{flex:1}
+footer{text-align:center;color:#697286;font-size:11px;padding:30px 0 12px}
+
+.ai-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:15px}
+.ai-chat{display:flex;flex-direction:column;min-height:58vh;max-height:72vh}
+.ai-chat-head{display:flex;align-items:center;gap:12px;padding-bottom:15px;border-bottom:1px solid var(--border)}
+.ai-avatar{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(135deg,#a69bff,#6e5bff);font-size:22px;flex-shrink:0}
+.ai-chat-log{flex:1;overflow-y:auto;min-height:220px;padding:16px 2px;display:flex;flex-direction:column;gap:13px}
+.ai-msg{max-width:92%;padding:12px 14px;border-radius:14px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.ai-msg.user{align-self:flex-end;background:#383254;border:1px solid #554a80}
+.ai-msg.assistant{align-self:flex-start;background:var(--panel2);border:1px solid var(--border)}
+.ai-msg.error{border-color:#773746;background:#44232d;color:#ffd1da}
+.ai-composer{border-top:1px solid var(--border);padding-top:14px}
+.ai-composer textarea{display:block;width:100%;min-height:88px;max-height:180px;resize:vertical;padding:13px;background:#111622;border:1px solid var(--border);border-radius:12px;color:var(--text);outline:none;line-height:1.5}
+.ai-composer textarea:focus{border-color:var(--accent)}
+.ai-composer-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.ai-suggestions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.ai-suggestions button{padding:8px 10px;border:1px solid var(--border);border-radius:99px;background:var(--panel2);color:var(--text);font-size:12px;text-align:left}
+.ai-suggestions button:hover{border-color:var(--accent)}
+.ai-status{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:560px){.ai-chat{min-height:60vh;max-height:76vh}.ai-msg{max-width:96%}.ai-composer-foot{align-items:stretch}.ai-composer-foot .primary{min-width:105px}}
+
+@media(max-width:850px){.span-3,.span-4{grid-column:span 6}.span-5,.span-7,.span-8{grid-column:span 12}}
+@media(max-width:560px){.app{padding:15px}.logo{font-size:20px}.logo-mark{width:37px;height:37px}.user-chip{display:none}.span-3,.span-4,.span-5,.span-6,.span-7,.span-8,.span-12{grid-column:span 12}.form-grid,.settings-grid{grid-template-columns:1fr}.auth-card{padding:23px}}
+</style>
+</head>
+<body>
+
+<section id="authScreen" class="auth-wrap">
+  <div class="auth-card">
+    <div class="logo"><div class="logo-mark">F</div>Finora</div>
+    <p class="subtle">Kelola uangmu dengan lebih terarah.</p>
+    <h1 id="authTitle">Selamat datang</h1>
+    <p id="authDescription" class="subtle">Masuk untuk melanjutkan ke dashboard keuanganmu.</p>
+    <div id="authNotice"></div>
+    <form id="authForm">
+      <div class="field"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="nama@email.com" required></div>
+      <div class="field" id="authPasswordField"><label for="authPassword">Kata sandi</label><input id="authPassword" type="password" minlength="6" autocomplete="current-password" placeholder="Minimal 6 karakter" required></div>
+      <div class="field hidden" id="confirmPasswordField"><label for="confirmPassword">Ulangi kata sandi</label><input id="confirmPassword" type="password" minlength="6" autocomplete="new-password"></div>
+      <div class="field" id="captchaField"><label>Verifikasi keamanan</label><div id="turnstileWidget"></div><div id="captchaStatus" class="subtle small" role="status">Memuat CAPTCHA…</div></div>
+      <button id="authSubmit" class="primary full" type="submit">Masuk</button>
+    </form>
+    <div class="row" style="margin-top:16px;flex-wrap:wrap">
+      <button id="toggleAuth" class="text-button" type="button">Belum punya akun? Daftar</button>
+      <button id="forgotPassword" class="text-button" type="button">Lupa kata sandi?</button>
+    </div>
+  </div>
+</section>
+
+<div id="appScreen" class="app hidden">
+  <header class="topbar">
+    <div class="logo"><div class="logo-mark">F</div>Finora</div>
+    <div class="top-actions">
+      <span id="userEmail" class="user-chip"></span>
+      <div class="menu-wrap">
+        <button id="menuButton" class="icon-btn" aria-label="Buka menu" aria-expanded="false">
+          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
+        <nav id="mainMenu" class="dropdown hidden">
+          <div class="menu-label">Menu utama</div>
+          <button data-page="dashboard">⌂ &nbsp; Dashboard</button>
+          <button data-page="transactions">⇄ &nbsp; Transaksi</button>
+          <button data-page="business">◈ &nbsp; Modal & keuntungan</button>
+          <button data-page="inventory">▦ &nbsp; Stok barang</button>
+          <button data-page="bills">◷ &nbsp; Pengingat tagihan</button>
+          <button data-page="budgets">◴ &nbsp; Anggaran</button>
+          <button data-page="goals">◎ &nbsp; Target tabungan</button>
+          <button data-page="reports">▥ &nbsp; Laporan</button>
+          <button data-page="ai">✦ &nbsp; Finora AI</button>
+          <div class="menu-label">Lainnya</div>
+          <button data-page="settings">⚙ &nbsp; Pengaturan & backup</button>
+          <button id="signOutButton">↪ &nbsp; Keluar akun</button>
+        </nav>
+      </div>
+    </div>
+  </header>
+  <main id="mainContent"></main>
+  <footer>Finora · Kelola keuangan dengan lebih bijak</footer>
+</div>
+
+<div id="goalModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="goalModalTitle">
+  <div class="modal-card">
+    <h2 id="goalModalTitle">Tambah tabungan</h2>
+    <p id="goalModalDescription" class="subtle">Masukkan nominal yang ingin ditambahkan.</p>
+    <form id="goalActionForm">
+      <div class="field" id="goalActionNoteField">
+        <label for="goalActionNote">Keterangan</label>
+        <input id="goalActionNote" type="text" maxlength="100" placeholder="Contoh: Beli makan">
+      </div>
+      <div class="field">
+        <label for="goalActionAmount">Nominal (Rp)</label>
+        <input id="goalActionAmount" type="number" inputmode="numeric" min="1" step="1" placeholder="100000" required>
+      </div>
+      <div class="notice" id="goalActionPreview" aria-live="polite" style="margin-bottom:14px">
+        Saldo setelah transaksi: Rp0
+      </div>
+      <div class="modal-actions">
+        <button id="cancelGoalAction" type="button" class="secondary">Batal</button>
+        <button id="saveGoalAction" type="submit" class="primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="passwordModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+  <div class="modal-card">
+    <h2 id="passwordModalTitle">Ubah kata sandi</h2>
+    <p id="passwordModalDescription" class="subtle">Buat kata sandi baru minimal 6 karakter.</p>
+    <div id="passwordNotice" aria-live="polite"></div>
+    <form id="passwordForm">
+      <div class="field"><label for="newPassword">Kata sandi baru</label><input id="newPassword" type="password" minlength="6" autocomplete="new-password" placeholder="Minimal 6 karakter" required></div>
+      <div class="field"><label for="confirmNewPassword">Ulangi kata sandi baru</label><input id="confirmNewPassword" type="password" minlength="6" autocomplete="new-password" placeholder="Ulangi kata sandi baru" required></div>
+      <div class="modal-actions">
+        <button id="cancelPasswordChange" type="button" class="secondary">Batal</button>
+        <button id="savePasswordChange" type="submit" class="primary">Simpan kata sandi</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const SUPABASE_URL = "https://doqevpmqvhcnyffhmeia.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_DFfi7L-5zCsznP3BcQBUDA_VLaHw9X2";
+const $ = id => document.getElementById(id);
+let supabase = null;
+if (window.supabase && typeof window.supabase.createClient === "function") {
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (error) {
+    console.error("Supabase initialization failed:", error);
+  }
+} else {
+  window.addEventListener("load", () => {
+    const noticeBox = $("authNotice");
+    if (noticeBox) noticeBox.innerHTML = '<div class="notice error">Layanan login belum termuat. Periksa koneksi internet, lalu muat ulang halaman.</div>';
+  });
+  // Keep the page visible if the Supabase CDN is unavailable instead of showing a blank screen.
+  document.addEventListener("DOMContentLoaded", () => {
+    const noticeBox = $("authNotice");
+    if (noticeBox) noticeBox.innerHTML = '<div class="notice error">Layanan login belum termuat. Periksa koneksi internet, lalu muat ulang halaman.</div>';
+  });
+  return;
+}
+let turnstileWidgetId = null;
+let turnstileRendered = false;
+function renderTurnstile() {
+  const holder = $("turnstileWidget");
+  const status = $("captchaStatus");
+  if (!holder || turnstileRendered) return;
+  if (!window.turnstile || typeof window.turnstile.render !== "function") {
+    if (status) status.textContent = "CAPTCHA belum termuat. Periksa koneksi atau nonaktifkan pemblokir konten, lalu muat ulang halaman.";
+    return;
+  }
+  try {
+    turnstileWidgetId = window.turnstile.render(holder, {
+      sitekey: "0x4AAAAAAFWvdnfttnm_3tLOr2JjxlVmFYA",
+      theme: "dark",
+      callback: () => { if (status) status.textContent = "Verifikasi berhasil."; },
+      "expired-callback": () => { if (status) status.textContent = "Verifikasi kedaluwarsa. Selesaikan CAPTCHA lagi."; },
+      "error-callback": () => { if (status) status.textContent = "CAPTCHA gagal dimuat. Pastikan Site Key dan domain sudah benar di Cloudflare Turnstile."; return true; }
+    });
+    turnstileRendered = true;
+    if (status) status.textContent = "Selesaikan verifikasi di bawah ini.";
+  } catch (error) {
+    if (status) status.textContent = "CAPTCHA gagal ditampilkan. Periksa Site Key dan domain di Cloudflare Turnstile.";
+    console.error("Turnstile render error:", error);
+  }
+}
+window.addEventListener("turnstile-loaded", renderTurnstile);
+if (window.turnstile) renderTurnstile();
+window.addEventListener("turnstile-failed", () => {
+  const status = $("captchaStatus");
+  if (status) status.textContent = "Skrip CAPTCHA diblokir atau gagal diunduh. Periksa koneksi atau pemblokir konten.";
+});
+const main = $("mainContent");
+const authScreen = $("authScreen");
+const appScreen = $("appScreen");
+
+let user = null;
+let authMode = "login";
+let currentPage = "dashboard";
+let aiHistory = [];
+let data = freshData();
+
+function makeId() {
+  return crypto.randomUUID ? crypto.randomUUID() :
+    Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function freshData() {
+  return {
+    transactions: [],
+    wallets: [{ id: makeId(), name: "Dompet utama", balance: 0 }],
+    budgets: [],
+    goals: [],
+    bills: [],
+    paidBills: [],
+    inventory: [],
+    businessCapital: 0
+  };
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c]));
+}
+
+function rupiah(n) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0
+  }).format(Number(n) || 0);
+}
+
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function dateLabel(date) {
+  return date
+    ? new Date(date + "T12:00:00").toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      })
+    : "-";
+}
+
+function notice(el, message, type = "") {
+  el.innerHTML = `<div class="notice ${type}">${escapeHtml(message)}</div>`;
+}
+
+function clearNotice(el) {
+  el.innerHTML = "";
+}
+
+/* Nominal: keyboard angka, pemisah ribuan otomatis. */
+function getNominal(value) {
+  return Number(String(value ?? "").replace(/\D/g, "")) || 0;
+}
+
+function formatNominalInput(input) {
+  const digits = input.value.replace(/\D/g, "");
+  input.value = digits ? Number(digits).toLocaleString("id-ID") : "";
+}
+
+function setupNominalInputs(root = document) {
+  root.querySelectorAll("input[data-nominal]").forEach(input => {
+    if (input.dataset.nominalReady) return;
+    input.dataset.nominalReady = "1";
+    input.setAttribute("inputmode", "numeric");
+    input.setAttribute("autocomplete", "off");
+    input.addEventListener("input", () => formatNominalInput(input));
+    if (input.value) formatNominalInput(input);
+  });
+}
+
+function nominalInput(name, label, value = "", required = true) {
+  return `<div class="field"><label>${escapeHtml(label)}</label><input name="${escapeHtml(name)}" type="text" data-nominal inputmode="numeric" pattern="[0-9.]*" value="${escapeHtml(value)}" placeholder="0" ${required ? "required" : ""}></div>`;
+}
+
+function refreshNominals() {
+  setupNominalInputs(main);
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const reg = mode === "register";
+  const forgot = mode === "forgot";
+  const passwordField = $("authPasswordField");
+  passwordField.classList.toggle("hidden", forgot);
+  $("authPassword").required = !forgot;
+  $("authPassword").value = "";
+  $("authTitle").textContent = reg ? "Buat akun Finora" : forgot ? "Lupa kata sandi" : "Selamat datang";
+  $("authDescription").textContent = reg
+    ? "Daftar untuk mulai mengatur keuanganmu."
+    : forgot
+      ? "Masukkan email yang terdaftar. Kami akan mengirim tautan untuk membuat kata sandi baru."
+      : "Masuk untuk melanjutkan ke dashboard keuanganmu.";
+  $("authSubmit").textContent = reg ? "Daftar akun" : forgot ? "Kirim tautan reset" : "Masuk";
+  $("captchaField").classList.toggle("hidden", forgot);
+  if (window.turnstile?.reset && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
+  $("confirmPasswordField").classList.toggle("hidden", !reg);
+  $("confirmPassword").required = reg;
+  $("toggleAuth").textContent = reg ? "Sudah punya akun? Masuk" : forgot ? "Kembali ke masuk" : "Belum punya akun? Daftar";
+  $("forgotPassword").classList.toggle("hidden", reg || forgot);
+  clearNotice($("authNotice"));
+}
+
+$("toggleAuth").addEventListener("click", () => {
+  if (authMode === "register" || authMode === "forgot") setAuthMode("login");
+  else setAuthMode("register");
+});
+
+function readableError(error) {
+  const msg = error?.message || "Terjadi kesalahan. Silakan coba lagi.";
+  if (/email not confirmed/i.test(msg)) return "Email belum diverifikasi. Periksa inbox atau folder Spam, klik tautan verifikasi, lalu login kembali.";
+  if (/invalid login credentials/i.test(msg)) return "Email atau kata sandi salah. Pastikan email sudah diverifikasi.";
+  if (/user already registered/i.test(msg)) return "Email ini sudah terdaftar. Silakan masuk atau verifikasi email terlebih dahulu.";
+  if (/password should be at least/i.test(msg)) return "Kata sandi terlalu pendek. Gunakan minimal 6 karakter.";
+  return msg;
+}
+
+function openPasswordModal(mode = "change") {
+  const recovery = mode === "recovery";
+  $("passwordModalTitle").textContent = recovery ? "Buat kata sandi baru" : "Ubah kata sandi";
+  $("passwordModalDescription").textContent = recovery
+    ? "Tautan pemulihan berhasil dibuka. Masukkan kata sandi baru untuk akunmu."
+    : "Masukkan kata sandi baru minimal 6 karakter.";
+  $("passwordForm").dataset.mode = mode;
+  $("passwordForm").reset();
+  clearNotice($("passwordNotice"));
+  $("passwordModal").classList.remove("hidden");
+  setTimeout(() => $("newPassword").focus(), 0);
+}
+
+function closePasswordModal() {
+  $("passwordModal").classList.add("hidden");
+  $("passwordForm").reset();
+  clearNotice($("passwordNotice"));
+}
+
+$("cancelPasswordChange").addEventListener("click", closePasswordModal);
+$("passwordModal").addEventListener("click", e => {
+  if (e.target === $("passwordModal")) closePasswordModal();
+});
+
+$("passwordForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const password = $("newPassword").value;
+  const confirmation = $("confirmNewPassword").value;
+  const submit = $("savePasswordChange");
+  clearNotice($("passwordNotice"));
+
+  if (password.length < 6) {
+    notice($("passwordNotice"), "Kata sandi minimal 6 karakter.", "error");
+    return;
+  }
+  if (password !== confirmation) {
+    notice($("passwordNotice"), "Konfirmasi kata sandi tidak cocok.", "error");
+    return;
+  }
+
+  submit.disabled = true;
+  submit.textContent = "Menyimpan...";
+  try {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    const mode = $("passwordForm").dataset.mode;
+    closePasswordModal();
+    alert(mode === "recovery"
+      ? "Kata sandi berhasil direset. Kamu sekarang bisa masuk dengan kata sandi baru."
+      : "Kata sandi berhasil diubah.");
+    if (mode === "recovery" && user) await boot();
+  } catch (error) {
+    notice($("passwordNotice"), readableError(error), "error");
+  } finally {
+    submit.disabled = false;
+    submit.textContent = "Simpan kata sandi";
+  }
+});
+
+$("authForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const email = $("authEmail").value.trim();
+  const password = $("authPassword").value;
+  const submit = $("authSubmit");
+  const captchaToken = window.turnstile?.getResponse && turnstileWidgetId !== null ? window.turnstile.getResponse(turnstileWidgetId) : "";
+
+  clearNotice($("authNotice"));
+  if (authMode !== "forgot" && !captchaToken) {
+    notice($("authNotice"), "Selesaikan CAPTCHA terlebih dahulu.", "error");
+    return;
+  }
+
+  if (authMode === "register" && password !== $("confirmPassword").value) {
+    notice($("authNotice"), "Kata sandi dan konfirmasi kata sandi tidak sama.", "error");
+    return;
+  }
+
+  submit.disabled = true;
+  submit.textContent = "Memproses...";
+
+  try {
+    if (authMode === "forgot") {
+      const redirectTo = window.location.origin + window.location.pathname;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) throw error;
+      notice($("authNotice"), "Jika email tersebut terdaftar, tautan reset sudah dikirim. Periksa Inbox dan folder Spam, lalu buka tautan terbaru untuk membuat kata sandi baru.", "success");
+    } else if (authMode === "register") {
+      const { data: result, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin, captchaToken }
+      });
+
+      if (error) throw error;
+
+      $("authPassword").value = "";
+      $("confirmPassword").value = "";
+      setAuthMode("login");
+      $("authEmail").value = email;
+
+      if (result.session) {
+        notice($("authNotice"), "Pendaftaran berhasil. Akun sudah aktif, silakan login.", "success");
+      } else {
+        notice(
+          $("authNotice"),
+          "Pendaftaran berhasil! Periksa email Anda untuk verifikasi akun. Klik tautan verifikasi di email, lalu kembali ke Finora dan login menggunakan email serta kata sandi yang sama.",
+          "success"
+        );
+      }
+    } else {
+      const { data: result, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      }, { captchaToken });
+
+      if (error) throw error;
+
+      user = result.user;
+      await boot();
+    }
+  } catch (error) {
+    notice($("authNotice"), readableError(error), "error");
+  } finally {
+    if (window.turnstile?.reset && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
+    submit.disabled = false;
+    submit.textContent = authMode === "register" ? "Daftar akun" : authMode === "forgot" ? "Kirim tautan reset" : "Masuk";
+  }
+});
+
+$("forgotPassword").addEventListener("click", () => {
+  setAuthMode("forgot");
+  $("authEmail").focus();
+});
+
+async function boot() {
+  if (!user) {
+    authScreen.classList.remove("hidden");
+    appScreen.classList.add("hidden");
+    return;
+  }
+
+  $("userEmail").textContent = user.email || "";
+  authScreen.classList.add("hidden");
+  appScreen.classList.remove("hidden");
+
+  await loadData();
+  renderPage();
+}
+
+async function loadData() {
+  try {
+    const { data: row, error } = await supabase
+      .from("finora_data")
+      .select("payload")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (row?.payload) {
+      const p = row.payload;
+
+      data = {
+        transactions: Array.isArray(p.transactions) ? p.transactions : [],
+        wallets: Array.isArray(p.wallets) ? p.wallets : [],
+        budgets: Array.isArray(p.budgets) ? p.budgets : [],
+        goals: Array.isArray(p.goals) ? p.goals : [],
+        bills: Array.isArray(p.bills) ? p.bills : [],
+        paidBills: Array.isArray(p.paidBills) ? p.paidBills : [],
+        inventory: Array.isArray(p.inventory) ? p.inventory : [],
+        businessCapital: Number(p.businessCapital || 0)
+      };
+
+      // Migrasi ke satu Dompet utama.
+      // Saldo awal lama direset ke 0 agar saldo tersimpan yang tidak pernah
+      // dimasukkan pengguna (misalnya Rp60.000) tidak muncul sendiri.
+      // Transaksi yang memang tersimpan tetap dipertahankan dan dihitung.
+      const oldWallets = data.wallets;
+      const mainWallet = oldWallets.find(w => w.name === "Dompet utama") || oldWallets[0];
+      const mainId = mainWallet?.id || makeId();
+      data.wallets = [{ id: mainId, name: "Dompet utama", balance: 0 }];
+      data.transactions = data.transactions.map(t => ({ ...t, walletId: mainId }));
+      data.goals = data.goals.map(g => ({ ...g, history: Array.isArray(g.history) ? g.history : [] }));
+      await saveData(true);
+    } else {
+      data = freshData();
+      await saveData(true);
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Data gagal dimuat. Periksa koneksi dan pengaturan Supabase: " + error.message);
+    data = freshData();
+  }
+}
+
+async function saveData(showError = false) {
+  if (!user) return;
+
+  try {
+    const { error } = await supabase.from("finora_data").upsert({
+      user_id: user.id,
+      payload: data,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "user_id" });
+
+    if (error) throw error;
+  } catch (error) {
+    console.error(error);
+    if (showError) alert("Data gagal disimpan: " + error.message);
+  }
+}
+
+function changePage(page) {
+  currentPage = page;
+  $("mainMenu").classList.add("hidden");
+  $("menuButton").setAttribute("aria-expanded", "false");
+  renderPage();
+}
+
+$("menuButton").addEventListener("click", () => {
+  const menu = $("mainMenu");
+  menu.classList.toggle("hidden");
+  $("menuButton").setAttribute("aria-expanded", String(!menu.classList.contains("hidden")));
+});
+
+document.addEventListener("click", e => {
+  if (!e.target.closest(".menu-wrap")) {
+    $("mainMenu").classList.add("hidden");
+    $("menuButton").setAttribute("aria-expanded", "false");
+  }
+});
+
+$("mainMenu").addEventListener("click", e => {
+  const btn = e.target.closest("[data-page]");
+  if (btn) changePage(btn.dataset.page);
+});
+
+$("signOutButton").addEventListener("click", async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) alert(error.message);
+});
+
+function heading(title, subtitle) {
+  return `<h1 class="page-title">${escapeHtml(title)}</h1><p class="page-subtitle">${escapeHtml(subtitle)}</p>`;
+}
+
+/* Pilihan dompet otomatis mengikuti semua dompet milik user. */
+function walletOptions(selected = "") {
+  if (!Array.isArray(data.wallets) || data.wallets.length === 0) {
+    return `<option value="">Belum ada dompet — buat dompet terlebih dahulu</option>`;
+  }
+
+  const selectedId = data.wallets.some(w => w.id === selected)
+    ? selected
+    : data.wallets[0].id;
+
+  return data.wallets.map(w =>
+    `<option value="${escapeHtml(w.id)}" ${w.id === selectedId ? "selected" : ""}>${escapeHtml(w.name)}</option>`
+  ).join("");
+}
+
+function categoryOptions(selected = "Makanan") {
+  return ["Makanan", "Transportasi", "Belanja", "Tagihan", "Gaji", "Bisnis", "Hiburan", "Kesehatan", "Pendidikan", "Tabungan", "Lainnya"]
+    .map(c => `<option ${c === selected ? "selected" : ""}>${c}</option>`)
+    .join("");
+}
+
+function totals() {
+  const income = data.transactions
+    .filter(t => t.type === "income")
+    .reduce((s, t) => s + Number(t.amount), 0);
+
+  const expense = data.transactions
+    .filter(t => t.type === "expense")
+    .reduce((s, t) => s + Number(t.amount), 0);
+
+  return { income, expense, net: income - expense };
+}
+
+function walletBalance(w) {
+  return Number(w.balance || 0) + data.transactions
+    .filter(t => t.walletId === w.id)
+    .reduce((s, t) => s + (t.type === "income" ? 1 : -1) * Number(t.amount), 0);
+}
+
+function totalBalance() {
+  return data.wallets.reduce((s, w) => s + walletBalance(w), 0);
+}
+
+function txRow(t, withDelete = false) {
+  const w = data.wallets.find(x => x.id === t.walletId);
+
+  return `<div class="item">
+    <div class="item-main">
+      <div class="item-name">${escapeHtml(t.name)}</div>
+      <div class="item-meta">${escapeHtml(t.category || "Lainnya")} · ${dateLabel(t.date)}${w ? " · " + escapeHtml(w.name) : ""}</div>
+    </div>
+    <div class="item-right">
+      <div class="${t.type === "income" ? "amount-in" : "amount-out"}" style="font-weight:750">${t.type === "income" ? "+" : "−"}${rupiah(t.amount)}</div>
+      ${withDelete ? `<button class="text-button small" data-action="delete-tx" data-id="${escapeHtml(t.id)}">Hapus</button>` : ""}
+    </div>
+  </div>`;
+}
+
+function renderPage() {
+  const pages = {
+    dashboard: renderDashboard,
+    wallets: renderWallets,
+    transactions: renderTransactions,
+    budgets: renderBudgets,
+    goals: renderGoals,
+    bills: renderBills,
+    inventory: renderInventory,
+    business: renderBusiness,
+    reports: renderReports,
+    ai: renderAI,
+    settings: renderSettings
+  };
+
+  (pages[currentPage] || renderDashboard)();
+  refreshNominals();
+}
+
+function budgetSpent(b) {
+  return data.transactions
+    .filter(t => t.type === "expense" && t.category === b.category && (!b.month || t.date?.startsWith(b.month)))
+    .reduce((s, t) => s + Number(t.amount), 0);
+}
+
+function budgetSummary(b) {
+  const spent = budgetSpent(b);
+  const limit = Number(b.limit) || 0;
+  const pct = limit ? Math.min(100, spent / limit * 100) : 0;
+
+  return `<div class="item-main">
+    <div class="row">
+      <div class="item-name">${escapeHtml(b.category)}</div>
+      <span class="small muted">${Math.round(pct)}%</span>
+    </div>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <div class="item-meta">${rupiah(spent)} dari ${rupiah(limit)}</div>
+  </div>`;
+}
+
+function goalSummary(g) {
+  const target = Number(g.target) || 0;
+  const saved = Number(g.saved) || 0;
+  const pct = target ? Math.min(100, saved / target * 100) : 0;
+
+  return `<div class="item-main">
+    <div class="row">
+      <div class="item-name">${escapeHtml(g.name)}</div>
+      <span class="small muted">${Math.round(pct)}%</span>
+    </div>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <div class="item-meta">${rupiah(saved)} dari ${rupiah(target)}${g.deadline ? " · Target " + dateLabel(g.deadline) : ""}</div>
+  </div>`;
+}
+
+function walletTotals(walletId) {
+  const list = data.transactions.filter(t => t.walletId === walletId);
+  const income = list.filter(t => t.type === "income").reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  const expense = list.filter(t => t.type === "expense").reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  return { income, expense, net: income - expense, count: list.length };
+}
+
+function renderDashboard() {
+  const all = totals();
+  const recent = [...data.transactions]
+    .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+    .slice(0, 5);
+
+  main.innerHTML = heading("Dashboard", "Ringkasan keuanganmu dalam satu tampilan.") + `
+  <div class="grid">
+    <section class="card span-4">
+      <div class="stat-label">Saldo dompet utama</div>
+      <div class="stat-value">${rupiah(totalBalance())}</div>
+    </section>
+    <section class="card span-4">
+      <div class="stat-label">Total pemasukan</div>
+      <div class="stat-value amount-in">${rupiah(all.income)}</div>
+    </section>
+    <section class="card span-4">
+      <div class="stat-label">Total pengeluaran</div>
+      <div class="stat-value amount-out">${rupiah(all.expense)}</div>
+    </section>
+    <section class="card span-12">
+      <div class="card-head">
+        <h3>Transaksi terbaru</h3>
+        <button class="text-button" data-page="transactions">Lihat semua →</button>
+      </div>
+      ${recent.length ? recent.map(t => txRow(t)).join("") : `<div class="empty">Belum ada transaksi. Tambahkan pemasukan atau pengeluaran dari menu Transaksi.</div>`}
+      <div class="form-actions">
+        <button class="primary" data-page="transactions">+ Tambah transaksi</button>
+        <button class="secondary" data-page="wallets">Lihat dompet utama</button>
+      </div>
+    </section>
+  </div>`;
+}
+
+function renderTransactions() {
+  main.innerHTML = heading("Transaksi", "Catat setiap pemasukan dan pengeluaran.") + `
+  <div class="grid">
+    <section class="card span-4">
+      <div class="card-head"><h3>Tambah transaksi</h3></div>
+      ${!data.wallets.length ? `<div class="notice">Buat dompet terlebih dahulu.</div>` : ""}
+      <form id="txForm">
+        <div class="field">
+          <label>Jenis transaksi</label>
+          <select name="type">
+            <option value="expense">Pengeluaran</option>
+            <option value="income">Pemasukan</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nama transaksi</label>
+          <input name="name" placeholder="Contoh: Makan siang" maxlength="100" required>
+        </div>
+        ${nominalInput("amount", "Nominal (Rp)")}
+        <div class="field" id="txCategoryField">
+          <label>Kategori pengeluaran</label>
+          <select name="category">${categoryOptions()}</select>
+        </div>
+        <div class="field">
+          <label>Dompet</label>
+          <input value="Dompet utama" disabled>
+        </div>
+        <div class="field">
+          <label>Tanggal</label>
+          <input name="date" type="date" value="${today()}" required>
+        </div>
+        <button class="primary full" ${!data.wallets.length ? "disabled" : ""}>Simpan transaksi</button>
+      </form>
+    </section>
+    <section class="card span-8">
+      <div class="card-head"><h3>Riwayat transaksi</h3><span class="pill">${data.transactions.length} transaksi</span></div>
+      <div class="tx-tools">
+        <input id="txSearch" placeholder="Cari transaksi...">
+        <select id="txFilter">
+          <option value="all">Semua jenis</option>
+          <option value="income">Pemasukan</option>
+          <option value="expense">Pengeluaran</option>
+        </select>
+
+      </div>
+      <div id="txList">${txListHtml()}</div>
+    </section>
+  </div>`;
+
+  const txTypeSelect = $("txForm").elements.namedItem("type");
+  const txCategoryField = $("txCategoryField");
+  function updateTransactionCategory() {
+    const isIncome = txTypeSelect.value === "income";
+    txCategoryField.classList.toggle("hidden", isIncome);
+  }
+  txTypeSelect.addEventListener("change", updateTransactionCategory);
+  updateTransactionCategory();
+
+  $("txForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const f = new FormData(e.target);
+    const amount = getNominal(f.get("amount"));
+    const walletId = data.wallets[0]?.id;
+
+    if (amount <= 0) {
+      alert("Masukkan nominal yang valid.");
+      return;
+    }
+
+    if (!data.wallets.some(w => w.id === walletId)) {
+      alert("Pilih dompet yang valid terlebih dahulu.");
+      return;
+    }
+
+    data.transactions.push({
+      id: makeId(),
+      type: f.get("type"),
+      name: String(f.get("name")).trim(),
+      amount,
+      category: f.get("type") === "income" ? "Pemasukan" : f.get("category"),
+      walletId,
+      date: f.get("date")
+    });
+
+    await saveData(true);
+    renderPage();
+  });
+
+  $("txSearch").addEventListener("input", renderTxListInto);
+  $("txFilter").addEventListener("change", renderTxListInto);
+  renderTxListInto();
+}
+
+function txListHtml() {
+  const list = [...data.transactions].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  return list.length
+    ? list.map(t => txRow(t, true)).join("")
+    : `<div class="empty">Belum ada transaksi.</div>`;
+}
+
+function renderTxListInto() {
+  const q = $("txSearch").value.toLowerCase();
+  const type = $("txFilter").value;
+  const list = [...data.transactions]
+    .filter(t => (type === "all" || t.type === type) && (`${t.name} ${t.category}`.toLowerCase().includes(q)))
+    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  $("txList").innerHTML = list.length
+    ? list.map(t => txRow(t, true)).join("")
+    : `<div class="empty">Transaksi tidak ditemukan.</div>`;
+}
+
+function renderWallets() {
+  const w = data.wallets[0];
+  const wt = walletTotals(w.id);
+  main.innerHTML = heading("Dompet utama", "Finora sekarang menggunakan satu dompet utama agar semua transaksi terpusat.") + `
+  <div class="grid">
+    <section class="card span-12">
+      <div class="stat-label">Saldo tersedia</div>
+      <div class="stat-value">${rupiah(walletBalance(w))}</div>
+      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px">
+        <div class="card" style="padding:15px;background:#142b27">
+          <div class="stat-label">Total pemasukan</div><div class="stat-value amount-in">${rupiah(wt.income)}</div>
+        </div>
+        <div class="card" style="padding:15px;background:#34212b">
+          <div class="stat-label">Total pengeluaran</div><div class="stat-value amount-out">${rupiah(wt.expense)}</div>
+        </div>
+      </div>
+      <div class="item-meta" style="margin-top:15px">Saldo awal gabungan: ${rupiah(w.balance || 0)}</div>
+    </section>
+    <section class="card span-6">
+      <div class="card-head"><h3>🏪 Layanan konter</h3></div>
+      <p class="subtle">Catat transaksi pelanggan seperti konter pulsa. Saldo Dompet Utama otomatis berkurang setelah transaksi berhasil disimpan.</p>
+      <form id="counterForm">
+        <div class="field"><label>Jenis layanan</label><select name="service"><option value="topup">Top up saldo pelanggan</option><option value="withdraw">Penarikan tunai pelanggan</option></select></div>
+        <div class="field"><label>Nama pelanggan</label><input name="customer" maxlength="80" placeholder="Nama pelanggan" required></div>
+        <div class="field"><label>Nomor / catatan (opsional)</label><input name="note" maxlength="100" placeholder="Nomor HP atau keterangan"></div>
+        ${nominalInput("amount", "Nominal transaksi (Rp)")}
+        <div class="field"><label>Biaya admin yang dibayar pelanggan (Rp)</label><input name="fee" type="number" inputmode="numeric" min="0" step="1" value="0" required></div>
+        <button class="primary full" type="submit">Simpan transaksi konter</button>
+      </form>
+      <div class="notice">Contoh: saldo awal Rp5.000.000, top up pelanggan Rp100.000, saldo berkurang menjadi Rp4.900.000. Biaya admin dicatat sebagai pemasukan terpisah.</div>
+    </section>
+    <section class="card span-6">
+      <div class="card-head"><h3>Riwayat dompet utama</h3><button class="text-button" data-page="transactions">Buka transaksi →</button></div>
+      ${data.transactions.length ? [...data.transactions].sort((a,b)=>(b.date||"").localeCompare(a.date||"")).slice(0,10).map(t=>txRow(t)).join("") : `<div class="empty">Belum ada transaksi di dompet utama.</div>`}
+    </section>
+  </div>`;
+  setupNominalInputs(main);
+  setupCounterForm();
+}
+
+// Layanan konter: top up dan tarik tunai mengurangi saldo kas yang tersedia.
+// Biaya admin (jika ada) dicatat sebagai pemasukan terpisah.
+function setupCounterForm() {
+  const form = $("counterForm");
+  if (!form) return;
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = new FormData(form);
+    const service = String(f.get("service"));
+    const customer = String(f.get("customer") || "").trim();
+    const note = String(f.get("note") || "").trim();
+    const amount = getNominal(f.get("amount"));
+    const fee = Math.floor(Number(f.get("fee")) || 0);
+    const wallet = data.wallets[0];
+    const balance = wallet ? walletBalance(wallet) : 0;
+
+    if (!wallet) return alert("Dompet utama tidak ditemukan.");
+    if (!customer) return alert("Masukkan nama pelanggan.");
+    if (!Number.isSafeInteger(amount) || amount <= 0) return alert("Nominal transaksi harus lebih dari Rp0.");
+    if (!Number.isSafeInteger(fee) || fee < 0) return alert("Biaya admin tidak valid.");
+    if (amount > balance) return alert(`Saldo tidak cukup. Saldo tersedia ${rupiah(balance)}.`);
+
+    const label = service === "topup" ? "Top up pelanggan" : "Penarikan tunai pelanggan";
+    const detail = `${label}: ${customer}${note ? " · " + note : ""}`;
+    if (!confirm(`${detail}
+Nominal: ${rupiah(amount)}
+Biaya admin: ${rupiah(fee)}
+Saldo setelah transaksi: ${rupiah(balance - amount + fee)}
+
+Simpan transaksi ini?`)) return;
+
+    const date = today();
+    data.transactions.push({ id: makeId(), type: "expense", name: detail, amount, category: "Layanan konter", walletId: wallet.id, date });
+    if (fee > 0) data.transactions.push({ id: makeId(), type: "income", name: `Biaya admin konter: ${customer}`, amount: fee, category: "Pemasukan", walletId: wallet.id, date });
+    await saveData(true);
+    renderPage();
+    alert("Transaksi konter berhasil dicatat.");
+  });
+}
+
+function renderBudgets() {
+  main.innerHTML = heading("Anggaran", "Tentukan batas pengeluaran berdasarkan kategori.") + `
+  <div class="grid">
+    <section class="card span-4">
+      <div class="card-head"><h3>Buat anggaran</h3></div>
+      <form id="budgetForm">
+        <div class="field">
+          <label>Kategori</label>
+          <select name="category">${categoryOptions()}</select>
+        </div>
+        ${nominalInput("limit", "Batas anggaran (Rp)")}
+        <div class="field">
+          <label>Bulan</label>
+          <input name="month" type="month" value="${today().slice(0, 7)}" required>
+        </div>
+        <button class="primary full">Simpan anggaran</button>
+      </form>
+    </section>
+    <section class="card span-8">
+      <div class="card-head"><h3>Anggaran saya</h3></div>
+      ${data.budgets.length ? data.budgets.map(b => `
+        <div class="item">
+          <div class="item-main">
+            ${budgetSummary(b)}
+            <div class="item-meta">${escapeHtml(b.month || "Semua bulan")}</div>
+          </div>
+          <button class="text-button small" data-action="delete-budget" data-id="${escapeHtml(b.id)}">Hapus</button>
+        </div>`).join("") : `<div class="empty">Belum ada anggaran.</div>`}
+    </section>
+  </div>`;
+
+  $("budgetForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const f = new FormData(e.target);
+    const limit = getNominal(f.get("limit"));
+
+    if (limit <= 0) {
+      alert("Masukkan batas anggaran yang valid.");
+      return;
+    }
+
+    data.budgets.push({
+      id: makeId(),
+      category: f.get("category"),
+      limit,
+      month: f.get("month")
+    });
+
+    await saveData(true);
+    renderPage();
+  });
+}
+
+function renderGoals() {
+  main.innerHTML = heading("Target tabungan", "Pantau progres menuju tujuan finansialmu.") + `
+  <div class="grid">
+    <section class="card span-4">
+      <div class="card-head"><h3>Target baru</h3></div>
+      <form id="goalForm">
+        <div class="field">
+          <label>Nama target</label>
+          <input name="name" maxlength="80" placeholder="Contoh: Beli laptop" required>
+        </div>
+        ${nominalInput("target", "Target nominal (Rp)")}
+        ${nominalInput("saved", "Tabungan saat ini (Rp)", "0")}
+        <div class="field">
+          <label>Tanggal target (opsional)</label>
+          <input name="deadline" type="date">
+        </div>
+        <button class="primary full">Simpan target</button>
+      </form>
+    </section>
+    <section class="card span-8">
+      <div class="card-head"><h3>Target saya</h3></div>
+      ${data.goals.length ? data.goals.map(g => `
+        <div class="item">
+          <div class="item-main">
+            ${goalSummary(g)}
+            <div class="form-actions">
+              <button class="secondary small" data-action="add-goal" data-id="${escapeHtml(g.id)}">+ Tambah tabungan</button>
+              <button class="danger small" data-action="spend-goal" data-id="${escapeHtml(g.id)}">− Catat pengeluaran</button>
+              <button class="text-button small" data-action="delete-goal" data-id="${escapeHtml(g.id)}">Hapus</button>
+            </div>
+            <div class="item-meta" style="margin-top:12px;font-weight:700">Riwayat tabungan dan pengeluaran</div>
+            ${(Array.isArray(g.history) ? g.history : []).length ? [...g.history].slice().reverse().map(h => `<div class="item"><div class="item-main"><div class="item-name">${escapeHtml(h.note || (h.type === "expense" ? "Pengeluaran tabungan" : "Tambah tabungan"))}</div><div class="item-meta">${dateLabel(h.date)} · ${h.type === "expense" ? "Pengeluaran" : "Menabung"}</div></div><div class="item-right ${h.type === "expense" ? "amount-out" : "amount-in"}" style="font-weight:750">${h.type === "expense" ? "−" : "+"}${rupiah(h.amount)}</div></div>`).join("") : `<div class="item-meta" style="margin-top:8px">Belum ada riwayat untuk target ini.</div>`}
+          </div>
+        </div>`).join("") : `<div class="empty">Belum ada target tabungan.</div>`}
+    </section>
+  </div>`;
+
+  $("goalForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const f = new FormData(e.target);
+    const target = getNominal(f.get("target"));
+
+    if (target <= 0) {
+      alert("Masukkan target nominal yang valid.");
+      return;
+    }
+
+    const initialSaved = getNominal(f.get("saved"));
+    const goalName = String(f.get("name")).trim();
+    if (!goalName) {
+      alert("Masukkan nama target tabungan.");
+      return;
+    }
+    data.goals.push({
+      id: makeId(),
+      name: goalName,
+      target,
+      saved: initialSaved,
+      deadline: f.get("deadline"),
+      history: initialSaved > 0 ? [{ id: makeId(), type: "income", amount: initialSaved, note: "Saldo tabungan awal", date: today() }] : []
+    });
+
+    await saveData(true);
+    renderPage();
+  });
+}
+
+function renderReports() {
+  const selectedMonth = new URLSearchParams(location.search).get("reportMonth") || today().slice(0,7);
+  const txForReport = data.transactions;
+  const monthlyTx = txForReport.filter(x => String(x.date||"").startsWith(selectedMonth));
+  const monthlyIncome = monthlyTx.filter(x=>x.type==="income").reduce((s,x)=>s+Number(x.amount||0),0);
+  const monthlyExpense = monthlyTx.filter(x=>x.type==="expense").reduce((s,x)=>s+Number(x.amount||0),0);
+  const income = txForReport.filter(x => x.type === "income").reduce((s, x) => s + Number(x.amount || 0), 0);
+  const expense = txForReport.filter(x => x.type === "expense").reduce((s, x) => s + Number(x.amount || 0), 0);
+  const t = { income, expense, net: income - expense };
+  const monthly = {};
+
+  txForReport.forEach(x => {
+    const m = (x.date || "").slice(0, 7) || "Tanpa tanggal";
+    if (!monthly[m]) monthly[m] = { income: 0, expense: 0 };
+    monthly[m][x.type] += Number(x.amount || 0);
+  });
+
+  const months = Object.keys(monthly).sort().slice(-6);
+  const max = Math.max(1, ...months.flatMap(m => [monthly[m].income, monthly[m].expense]));
+  const categories = {};
+
+  txForReport.filter(x => x.type === "expense").forEach(x => {
+    categories[x.category || "Lainnya"] = (categories[x.category || "Lainnya"] || 0) + Number(x.amount || 0);
+  });
+
+  main.innerHTML = heading("Laporan", "Laporan pemasukan dan pengeluaran dompet utama.") + `
+  <div class="grid">
+    <section class="card span-12"><div class="card-head"><h3>Ringkasan bulanan</h3><input id="reportMonthPicker" type="month" value="${escapeHtml(selectedMonth)}" style="padding:10px;background:#111622;border:1px solid var(--border);color:var(--text);border-radius:10px"></div><div class="grid"><section class="card span-4"><div class="stat-label">Pemasukan bulan ini</div><div class="stat-value amount-in">${rupiah(monthlyIncome)}</div></section><section class="card span-4"><div class="stat-label">Pengeluaran bulan ini</div><div class="stat-value amount-out">${rupiah(monthlyExpense)}</div></section><section class="card span-4"><div class="stat-label">Bersih bulan ini</div><div class="stat-value">${rupiah(monthlyIncome-monthlyExpense)}</div></section></div><button class="secondary" data-action="export-month-report" data-month="${escapeHtml(selectedMonth)}">Ekspor laporan bulan ini (CSV)</button></section>
+    <section class="card span-4"><div class="stat-label">Total pemasukan</div><div class="stat-value amount-in">${rupiah(t.income)}</div></section>
+    <section class="card span-4"><div class="stat-label">Total pengeluaran</div><div class="stat-value amount-out">${rupiah(t.expense)}</div></section>
+    <section class="card span-4"><div class="stat-label">Arus kas bersih</div><div class="stat-value">${rupiah(t.net)}</div></section>
+    <section class="card span-12">
+      <div class="card-head"><h3>Arus kas per bulan</h3><span class="pill">6 bulan terakhir</span></div>
+      ${months.length ? `
+        <div class="chart-bars">
+          ${months.map(m => `
+            <div class="bar-col">
+              <div style="display:flex;align-items:flex-end;gap:3px;height:100%;width:100%;justify-content:center">
+                <div class="bar" title="Pemasukan ${rupiah(monthly[m].income)}" style="height:${Math.max(3, monthly[m].income / max * 100)}%;background:var(--green)"></div>
+                <div class="bar" title="Pengeluaran ${rupiah(monthly[m].expense)}" style="height:${Math.max(3, monthly[m].expense / max * 100)}%;background:var(--red)"></div>
+              </div>
+              <span class="bar-label">${escapeHtml(m)}</span>
+            </div>`).join("")}
+        </div>
+        <div class="row small muted"><span>🟢 Pemasukan</span><span>🔴 Pengeluaran</span></div>
+      ` : `<div class="empty">Belum ada transaksi di dompet utama.</div>`}
+    </section>
+    <section class="card span-6">
+      <div class="card-head"><h3>Pengeluaran per kategori</h3></div>
+      ${Object.keys(categories).length
+        ? Object.entries(categories).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="item"><span>${escapeHtml(k)}</span><b>${rupiah(v)}</b></div>`).join("")
+        : `<div class="empty">Belum ada pengeluaran di dompet utama.</div>`}
+    </section>
+    <section class="card span-6">
+      <div class="card-head"><h3>Ekspor laporan</h3></div>
+      <p class="subtle">Ekspor seluruh riwayat transaksi dompet utama dalam format CSV.</p>
+      <button class="primary" data-action="export-csv">Ekspor CSV</button>
+    </section>
+  </div>`;
+
+}
+
+function renderBills() {
+  const todayKey = today();
+  const unpaid = data.bills.filter(b => !b.paid).sort((a,b) => String(a.due).localeCompare(String(b.due)));
+  const paid = (data.paidBills || []).slice().sort((a,b) => String(b.paidAt || b.due).localeCompare(String(a.paidAt || a.due))).slice(0,10);
+  main.innerHTML = heading("Pengingat tagihan", "Catat tagihan, tanggal jatuh tempo, dan pantau status pembayaran.") + `
+  <div class="grid">
+    <section class="card span-5"><div class="card-head"><h3>Tambah tagihan</h3></div>
+      <form id="billForm">
+        <div class="field"><label for="billName">Nama tagihan</label><input id="billName" maxlength="100" placeholder="Contoh: Listrik toko" required></div>
+        <div class="field"><label for="billAmount">Nominal (Rp)</label><input id="billAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="150000" required></div>
+        <div class="field"><label for="billDue">Tanggal jatuh tempo</label><input id="billDue" type="date" value="${today()}" required></div>
+        <div class="field"><label for="billRemind">Ingatkan</label><select id="billRemind"><option value="0">Pada tanggal jatuh tempo</option><option value="1">1 hari sebelumnya</option><option value="3">3 hari sebelumnya</option><option value="7">7 hari sebelumnya</option></select></div>
+        <div class="field"><label for="billNote">Catatan (opsional)</label><input id="billNote" maxlength="180" placeholder="Nomor pelanggan atau catatan"></div>
+        <button class="primary full" type="submit">Simpan tagihan</button>
+      </form>
+      <p class="subtle small">Notifikasi browser memerlukan izin. Pada iPhone, dukungan notifikasi web bergantung pada versi iOS dan apakah situs ditambahkan ke Layar Utama.</p>
+      <button class="secondary" type="button" data-action="enable-notifications">Aktifkan notifikasi</button>
+    </section>
+    <section class="card span-7"><div class="card-head"><h3>Tagihan belum lunas</h3><span class="pill">${unpaid.length} tagihan</span></div>
+      ${unpaid.length ? unpaid.map(b=>{const late=String(b.due)<todayKey;return `<div class="item"><div class="item-main"><div class="item-name">${escapeHtml(b.name)}</div><div class="item-meta">Jatuh tempo ${dateLabel(b.due)}${b.note?' · '+escapeHtml(b.note):''}</div><div class="item-meta" style="color:${late?'var(--red)':'var(--muted)'}">${late?'Terlambat':b.due===todayKey?'Jatuh tempo hari ini':'Belum jatuh tempo'}</div></div><div class="item-right"><b>${rupiah(b.amount)}</b><div class="form-actions"><button class="primary small" data-action="pay-bill" data-id="${escapeHtml(b.id)}">Lunasi</button><button class="text-button small" data-action="delete-bill" data-id="${escapeHtml(b.id)}">Hapus</button></div></div></div>`}).join('') : '<div class="empty">Belum ada tagihan aktif. Tambahkan tagihan di formulir.</div>'}
+    </section>
+    <section class="card span-12"><div class="card-head"><h3>Riwayat tagihan lunas</h3></div>${paid.length?paid.map(b=>`<div class="item"><div class="item-main"><div class="item-name">${escapeHtml(b.name)}</div><div class="item-meta">Lunas ${dateLabel(b.paidAt || b.due)}</div></div><div class="item-right"><b>${rupiah(b.amount)}</b><button class="text-button small" data-action="delete-paid-bill" data-id="${escapeHtml(b.id)}">Hapus riwayat</button></div></div>`).join(''):'<div class="empty">Riwayat tagihan lunas akan muncul di sini.</div>'}</section>
+  </div>`;
+  checkBillReminders();
+}
+
+function checkBillReminders() {
+  if (!Array.isArray(data.bills)) return;
+  const now = today();
+  const dueBills = data.bills.filter(b => !b.paid && b.due && Math.ceil((new Date(b.due+'T00:00:00')-new Date(now+'T00:00:00'))/86400000) <= Number(b.remind || 0) && new Date(b.due+'T00:00:00') >= new Date(now+'T00:00:00'));
+  if (!dueBills.length) return;
+  const last = sessionStorage.getItem('finora_bill_notice_date');
+  if (last === now) return;
+  sessionStorage.setItem('finora_bill_notice_date', now);
+  if ('Notification' in window && Notification.permission === 'granted') dueBills.forEach(b => new Notification('Pengingat tagihan Finora', {body:`${b.name}: ${rupiah(b.amount)} · jatuh tempo ${dateLabel(b.due)}`}));
+}
+
+function renderInventory() {
+  const items = data.inventory || [];
+  const totalValue = items.reduce((s,x)=>s+Number(x.stock||0)*Number(x.cost||0),0);
+  const low = items.filter(x=>Number(x.stock||0)<=Number(x.minStock||0));
+  main.innerHTML = heading("Manajemen stok barang", "Catat stok, harga modal, harga jual, dan pantau barang yang hampir habis.") + `<div class="grid">
+    <section class="card span-4"><div class="card-head"><h3>Tambah barang</h3></div><form id="stockForm">
+      <div class="field"><label for="stockName">Nama barang</label><input id="stockName" maxlength="100" required placeholder="Contoh: Kopi sachet"></div>
+      <div class="field"><label for="stockQty">Jumlah stok awal</label><input id="stockQty" type="number" min="0" step="1" required value="0"></div>
+      <div class="field"><label for="stockCost">Harga modal per barang (Rp)</label><input id="stockCost" type="number" min="0" step="1" required value="0"></div>
+      <div class="field"><label for="stockPrice">Harga jual per barang (Rp)</label><input id="stockPrice" type="number" min="0" step="1" required value="0"></div>
+      <div class="field"><label for="stockMin">Peringatan stok menipis jika tersisa</label><input id="stockMin" type="number" min="0" step="1" value="3" required></div>
+      <button class="primary full" type="submit">Simpan barang</button></form></section>
+    <section class="card span-8"><div class="grid"><div class="card span-6"><div class="stat-label">Jenis barang</div><div class="stat-value">${items.length}</div></div><div class="card span-6"><div class="stat-label">Nilai modal stok</div><div class="stat-value">${rupiah(totalValue)}</div></div><div class="card span-12"><div class="card-head"><h3>Daftar stok</h3><span class="pill">${low.length} stok menipis</span></div>${items.length?items.map(x=>`<div class="item"><div class="item-main"><div class="item-name">${escapeHtml(x.name)}</div><div class="item-meta">Modal ${rupiah(x.cost)} · Jual ${rupiah(x.price)} · Margin ${rupiah(Number(x.price||0)-Number(x.cost||0))}/unit</div><div class="item-meta" style="color:${Number(x.stock)<=Number(x.minStock)?'var(--red)':'var(--muted)'}">Stok: ${Number(x.stock)} unit${Number(x.stock)<=Number(x.minStock)?' · Stok menipis':''}</div></div><div class="item-right"><div class="form-actions"><button class="secondary small" data-action="stock-add" data-id="${escapeHtml(x.id)}">+ Stok</button><button class="primary small" data-action="stock-sell" data-id="${escapeHtml(x.id)}">Jual</button><button class="text-button small" data-action="stock-delete" data-id="${escapeHtml(x.id)}">Hapus</button></div></div></div>`).join(''):'<div class="empty">Belum ada barang. Tambahkan barang di formulir.</div>'}</div></div></section>
+  </div>`;
+}
+
+function renderBusiness() {
+  const income = data.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount||0),0);
+  const expense = data.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount||0),0);
+  const profit = income-expense;
+  main.innerHTML = heading("Modal & keuntungan", "Pantau modal awal usaha, omzet tercatat, pengeluaran, dan hasil bersih berdasarkan transaksi Finora.") + `<div class="grid">
+    <section class="card span-4"><div class="stat-label">Modal awal usaha</div><div class="stat-value">${rupiah(data.businessCapital||0)}</div><p class="subtle small">Masukkan modal awal untuk jadi patokan.</p><form id="capitalForm"><div class="field"><label for="capitalAmount">Modal awal (Rp)</label><input id="capitalAmount" type="number" min="0" step="1" value="${Number(data.businessCapital||0)}" required></div><button class="primary full" type="submit">Simpan modal</button></form></section>
+    <section class="card span-4"><div class="stat-label">Total pemasukan / omzet tercatat</div><div class="stat-value amount-in">${rupiah(income)}</div><p class="subtle small">Berdasarkan transaksi pemasukan yang dicatat.</p></section>
+    <section class="card span-4"><div class="stat-label">Total pengeluaran</div><div class="stat-value amount-out">${rupiah(expense)}</div><p class="subtle small">Berdasarkan transaksi pengeluaran yang dicatat.</p></section>
+    <section class="card span-12"><div class="stat-label">Selisih pemasukan dan pengeluaran</div><div class="stat-value ${profit>=0?'amount-in':'amount-out'}">${rupiah(profit)}</div><p class="subtle">Ini adalah arus kas bersih dari transaksi yang dicatat, bukan perhitungan laba akuntansi lengkap. Pembelian stok perlu dicatat sebagai pengeluaran bila ingin ikut dihitung.</p></section>
+  </div>`;
+}
+
+function renderAI() {
+  const all = totals();
+  main.innerHTML = heading("Finora AI", "Asisten pintar untuk membantu mengelola usaha dan memahami keuanganmu.") + `
+  <div class="ai-layout">
+    <section class="card ai-chat">
+      <div class="ai-chat-head">
+        <div class="ai-avatar">✦</div>
+        <div>
+          <div style="font-weight:800;font-size:16px">Finora AI</div>
+          <div class="item-meta">Konsultan usaha · Modal, harga jual, laba, dan arus kas</div>
+        </div>
+      </div>
+      <div id="aiChatLog" class="ai-chat-log" aria-live="polite">
+        ${!aiHistory.length ? `<div class="ai-msg assistant">Halo! Aku Finora AI. Aku bisa bantu menghitung modal, harga jual, keuntungan, stok barang, promosi, dan arus kas usahamu. Tanyakan apa saja yang ingin kamu evaluasi.</div>` : ""}
+        ${aiHistory.map(m => `<div class="ai-msg ${m.role === "user" ? "user" : "assistant"}${m.error ? " error" : ""}">${escapeHtml(m.content)}</div>`).join("")}
+      </div>
+      <div class="ai-suggestions">
+        <button type="button" data-ai-prompt="Bantu analisis kondisi keuangan usaha saya berdasarkan data Finora.">Analisis keuangan</button>
+        <button type="button" data-ai-prompt="Bantu hitung harga jual yang cocok jika saya berikan modal dan biaya barang.">Hitung harga jual</button>
+        <button type="button" data-ai-prompt="Berikan saran praktis untuk meningkatkan penjualan usaha kecil.">Strategi penjualan</button>
+        <button type="button" data-ai-prompt="Jelaskan cara menghitung laba bersih dan mengatur arus kas usaha.">Laba & arus kas</button>
+      </div>
+      <form id="aiChatForm" class="ai-composer">
+        <label for="aiMessage" class="small muted">Pertanyaan kamu</label>
+        <textarea id="aiMessage" maxlength="10000" placeholder="Contoh: Modal barang Rp500.000, biaya lain Rp50.000. Kalau dijual Rp700.000, berapa laba saya?" required></textarea>
+        <div class="ai-composer-foot">
+          <span class="small muted">Jawaban AI dapat keliru. Periksa kembali perhitungan penting.</span>
+          <button id="aiSendButton" class="primary" type="submit">Kirim ↗</button>
+        </div>
+        <div id="aiStatus" class="ai-status" role="status"></div>
+      </form>
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Ringkasan data yang tersedia</h3><span class="pill">Data Finora</span></div>
+      <div class="item"><div class="item-main"><div class="item-name">Saldo saat ini</div></div><div class="item-right">${rupiah(totalBalance())}</div></div>
+      <div class="item"><div class="item-main"><div class="item-name">Total pemasukan</div></div><div class="item-right amount-in">${rupiah(all.income)}</div></div>
+      <div class="item"><div class="item-main"><div class="item-name">Total pengeluaran</div></div><div class="item-right amount-out">${rupiah(all.expense)}</div></div>
+      <div class="item"><div class="item-main"><div class="item-name">Transaksi tercatat</div></div><div class="item-right">${data.transactions.length}</div></div>
+      <div class="item"><div class="item-main"><div class="item-name">Barang di inventaris</div></div><div class="item-right">${data.inventory.length}</div></div>
+      <p class="subtle small" style="margin-bottom:0">Ringkasan ini dikirim ke AI saat kamu bertanya, agar saran bisa lebih relevan dengan data yang tersedia.</p>
+    </section>
+  </div>`;
+
+  const log = $("aiChatLog");
+  if (log) log.scrollTop = log.scrollHeight;
+
+  const messageInput = $("aiMessage");
+  const form = $("aiChatForm");
+  const sendButton = $("aiSendButton");
+  const status = $("aiStatus");
+  if (!form || !messageInput || !sendButton || !status) return;
+
+  async function sendAIMessage(rawMessage) {
+    const message = String(rawMessage || "").trim();
+    if (!message || sendButton.disabled) return;
+
+    aiHistory.push({ role: "user", content: message });
+    if (aiHistory.length > 20) aiHistory = aiHistory.slice(-20);
+    renderAI();
+
+    const currentInput = $("aiMessage");
+    const currentButton = $("aiSendButton");
+    const currentStatus = $("aiStatus");
+    currentButton.disabled = true;
+    currentButton.textContent = "Memproses…";
+    currentStatus.textContent = "Finora AI sedang menyiapkan jawaban…";
+
+    const context = {
+      currency: "IDR",
+      balance: totalBalance(),
+      totals: totals(),
+      businessCapital: Number(data.businessCapital || 0),
+      transactions: data.transactions.slice(-50).map(t => ({
+        name: t.name,
+        type: t.type,
+        amount: Number(t.amount || 0),
+        category: t.category,
+        date: t.date
+      })),
+      budgets: data.budgets,
+      goals: data.goals,
+      bills: data.bills,
+      paidBills: data.paidBills,
+      inventory: data.inventory
+    };
+
+    try {
+      const { data: result, error } = await supabase.functions.invoke("finora-ai", {
+        body: {
+          message,
+          history: aiHistory.slice(0, -1).slice(-10).map(m => ({
+            role: m.role === "assistant" ? "model" : "user",
+            content: m.content
+          })),
+          context
+        }
+      });
+
+      if (error) {
+        let detail = error.message || "Function gagal dipanggil.";
+        try {
+          const response = error.context;
+          if (response && typeof response.json === "function") {
+            const body = await response.json();
+            if (body?.error) detail = body.error;
+          }
+        } catch (_) {}
+        throw new Error(detail);
+      }
+
+      if (result?.error) throw new Error(result.error);
+      const answer = String(result?.answer || result?.text || "").trim();
+      if (!answer) throw new Error("AI mengirim jawaban kosong. Periksa log Edge Function di Supabase.");
+      aiHistory.push({ role: "assistant", content: answer });
+      if (aiHistory.length > 20) aiHistory = aiHistory.slice(-20);
+      renderAI();
+    } catch (error) {
+      console.error("Finora AI request failed:", error);
+      aiHistory.push({ role: "assistant", content: "Maaf, AI belum bisa menjawab. " + (error?.message || "Periksa koneksi dan konfigurasi Supabase.") , error: true });
+      if (aiHistory.length > 20) aiHistory = aiHistory.slice(-20);
+      renderAI();
+      const lastMessage = $("aiChatLog")?.lastElementChild;
+      if (lastMessage) lastMessage.classList.add("error");
+    }
+  }
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const message = messageInput.value.trim();
+    if (!message) return;
+    await sendAIMessage(message);
+  });
+
+  main.querySelectorAll("[data-ai-prompt]").forEach(button => {
+    button.addEventListener("click", () => sendAIMessage(button.dataset.aiPrompt));
+  });
+}
+
+function renderSettings() {
+  main.innerHTML = heading("Pengaturan", "Kelola akun dan salinan data Finora.") + `
+  <div class="settings-grid">
+    <section class="card">
+      <div class="card-head"><h3>Akun</h3></div>
+      <div class="item">
+        <div><b>Email akun</b><div class="item-meta">${escapeHtml(user?.email || "-")}</div></div>
+      </div>
+      <div class="form-actions">
+        <button class="secondary" data-action="password-change">Ubah kata sandi</button>
+        <button class="danger" id="settingsSignOut">Keluar akun</button>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Backup data</h3></div>
+      <p class="subtle">Unduh backup JSON atau pulihkan data dari file backup Finora.</p>
+      <div class="form-actions">
+        <button class="primary" data-action="export-json">Unduh backup JSON</button>
+        <label class="secondary" style="display:inline-flex;align-items:center;cursor:pointer">
+          Pulihkan JSON
+          <input id="restoreFile" type="file" accept=".json,application/json" hidden>
+        </label>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Ekspor transaksi</h3></div>
+      <p class="subtle">Unduh daftar transaksi dalam format CSV.</p>
+      <button class="secondary" data-action="export-csv">Ekspor CSV</button>
+    </section>
+  </div>`;
+
+  $("settingsSignOut").addEventListener("click", () => $("signOutButton").click());
+
+  $("restoreFile").addEventListener("change", async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const p = JSON.parse(await file.text());
+
+      if (!p || !Array.isArray(p.transactions) || !Array.isArray(p.wallets) || !Array.isArray(p.budgets) || !Array.isArray(p.goals)) {
+        throw new Error("Struktur backup tidak valid.");
+      }
+
+      if (!confirm("Pulihkan backup? Data saat ini akan diganti.")) return;
+
+      data = p;
+      await saveData(true);
+      renderPage();
+      alert("Backup berhasil dipulihkan.");
+    } catch (err) {
+      alert("Gagal memulihkan backup: " + err.message);
+    }
+
+    e.target.value = "";
+  });
+}
+
+function downloadBlob(content, type, name) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportCSV(transactions = data.transactions, filename = "finora-transaksi.csv") {
+  const rows = [["Tanggal", "Jenis", "Nama", "Kategori", "Dompet", "Nominal"]];
+
+  transactions.forEach(t => {
+    const w = data.wallets.find(x => x.id === t.walletId);
+    rows.push([t.date, t.type, t.name, t.category, w?.name || "", t.amount]);
+  });
+
+  const csv = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  downloadBlob("\uFEFF" + csv, "text/csv;charset=utf-8", filename);
+}
+
+function exportJSON() {
+  downloadBlob(JSON.stringify(data, null, 2), "application/json", "finora-backup.json");
+}
+
+let activeGoalId = null;
+let activeGoalAction = "income";
+
+function openGoalModal(goalId, action) {
+  const goal = data.goals.find(x => x.id === goalId);
+  if (!goal) return;
+
+  activeGoalId = goalId;
+  activeGoalAction = action;
+  const isExpense = action === "expense";
+  $("goalModalTitle").textContent = isExpense ? "Catat pengeluaran tabungan" : "Tambah tabungan";
+  $("goalModalDescription").textContent = isExpense
+    ? `Saldo tabungan saat ini: ${rupiah(goal.saved)}. Pengeluaran akan mengurangi saldo target ini.`
+    : `Saldo tabungan saat ini: ${rupiah(goal.saved)}. Masukkan nominal yang ingin ditambahkan.`;
+  $("goalActionNoteField").classList.toggle("hidden", !isExpense);
+  $("goalActionNote").required = isExpense;
+  $("goalActionNote").value = isExpense ? "" : "Tambah tabungan";
+  $("goalActionAmount").value = "";
+  $("saveGoalAction").textContent = isExpense ? "Catat pengeluaran" : "Tambah tabungan";
+  updateGoalActionPreview();
+  $("goalModal").classList.remove("hidden");
+  setTimeout(() => $("goalActionAmount").focus(), 50);
+}
+
+// Hitung saldo target secara langsung saat nominal diketik.
+function updateGoalActionPreview() {
+  const goal = data.goals.find(x => x.id === activeGoalId);
+  const preview = $("goalActionPreview");
+  if (!preview) return;
+
+  if (!goal) {
+    preview.textContent = "Saldo setelah transaksi: Rp0";
+    return;
+  }
+
+  const amount = Math.max(0, Math.floor(Number($("goalActionAmount").value) || 0));
+  const isExpense = activeGoalAction === "expense";
+  const current = Number(goal.saved || 0);
+  const next = current + (isExpense ? -amount : amount);
+  preview.textContent = `Saldo saat ini: ${rupiah(current)} · Saldo setelah ${isExpense ? "pengeluaran" : "menabung"}: ${rupiah(Math.max(0, next))}`;
+  preview.classList.toggle("error", isExpense && amount > current);
+}
+
+function closeGoalModal() {
+  $("goalModal").classList.add("hidden");
+  $("goalActionForm").reset();
+  activeGoalId = null;
+}
+
+$("cancelGoalAction").addEventListener("click", closeGoalModal);
+$("goalActionAmount").addEventListener("input", updateGoalActionPreview);
+$("goalModal").addEventListener("click", e => {
+  if (e.target === $("goalModal")) closeGoalModal();
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !$("goalModal").classList.contains("hidden")) closeGoalModal();
+});
+
+$("goalActionForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const goal = data.goals.find(x => x.id === activeGoalId);
+  if (!goal) {
+    closeGoalModal();
+    return;
+  }
+
+  const amount = Number($("goalActionAmount").value);
+  const isExpense = activeGoalAction === "expense";
+  const note = $("goalActionNote").value.trim();
+
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    alert("Masukkan nominal berupa angka bulat yang lebih besar dari 0.");
+    $("goalActionAmount").focus();
+    return;
+  }
+  if (isExpense && !note) {
+    alert("Masukkan keterangan pengeluaran, misalnya Beli makan.");
+    $("goalActionNote").focus();
+    return;
+  }
+  if (isExpense && amount > Number(goal.saved || 0)) {
+    alert(`Saldo tabungan tidak cukup. Saldo saat ini ${rupiah(goal.saved)}.`);
+    $("goalActionAmount").focus();
+    return;
+  }
+
+  goal.saved = Number(goal.saved || 0) + (isExpense ? -amount : amount);
+  if (!Array.isArray(goal.history)) goal.history = [];
+  goal.history.push({
+    id: makeId(),
+    type: isExpense ? "expense" : "income",
+    amount,
+    note: isExpense ? note : "Tambah tabungan",
+    date: today()
+  });
+
+  closeGoalModal();
+  await saveData(true);
+  renderPage();
+});
+
+main.addEventListener("change", e => {
+  if (e.target.id === "reportMonthPicker" && e.target.value) {
+    const url = new URL(location.href); url.searchParams.set("reportMonth", e.target.value); history.replaceState({}, "", url); renderPage();
+  }
+});
+
+main.addEventListener("submit", async e => {
+  const form = e.target;
+  if (!form.id || !["billForm","stockForm","capitalForm"].includes(form.id)) return;
+  e.preventDefault();
+  if (form.id === "billForm") {
+    const amount = Number($("billAmount").value);
+    if (!Number.isFinite(amount) || amount <= 0) { alert("Nominal tagihan harus lebih dari 0."); return; }
+    data.bills.push({id:makeId(),name:$("billName").value.trim(),amount,due:$("billDue").value,remind:Number($("billRemind").value),note:$("billNote").value.trim(),paid:false});
+    await saveData(true); renderPage(); return;
+  }
+  if (form.id === "stockForm") {
+    const name=$("stockName").value.trim(), stock=Number($("stockQty").value), cost=Number($("stockCost").value), price=Number($("stockPrice").value), minStock=Number($("stockMin").value);
+    if (!name || [stock,cost,price,minStock].some(n=>!Number.isFinite(n)||n<0)) { alert("Periksa kembali data barang."); return; }
+    data.inventory.push({id:makeId(),name,stock,cost,price,minStock}); await saveData(true); renderPage(); return;
+  }
+  if (form.id === "capitalForm") {
+    const value=Number($("capitalAmount").value); if(!Number.isFinite(value)||value<0){alert("Modal tidak boleh negatif.");return;}
+    data.businessCapital=value; await saveData(true); renderPage();
+  }
+});
+
+main.addEventListener("click", async e => {
+  const page = e.target.closest("[data-page]");
+  if (page) {
+    changePage(page.dataset.page);
+    return;
+  }
+
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+
+  const id = btn.dataset.id;
+
+  switch (btn.dataset.action) {
+    case "enable-notifications":
+      if (!('Notification' in window)) { alert("Browser ini tidak mendukung notifikasi web."); break; }
+      try { const permission = await Notification.requestPermission(); alert(permission === "granted" ? "Notifikasi diizinkan. Finora akan mengingatkan saat halaman dibuka dan tagihan mendekati jatuh tempo." : "Izin notifikasi belum diberikan."); } catch (_) { alert("Gagal meminta izin notifikasi."); }
+      break;
+    case "pay-bill": {
+      const bill = data.bills.find(x=>x.id===id); if (!bill) break;
+      if (confirm(`Tandai tagihan ${bill.name} sebesar ${rupiah(bill.amount)} sebagai lunas?`)) {
+        data.paidBills = Array.isArray(data.paidBills) ? data.paidBills : [];
+        data.paidBills.unshift({...bill, paid:true, paidAt:today()});
+        data.bills = data.bills.filter(x=>x.id!==id); await saveData(true); renderPage();
+      }
+      break;
+    }
+    case "delete-bill":
+      if(confirm("Hapus tagihan ini?")){data.bills=data.bills.filter(x=>x.id!==id);await saveData(true);renderPage();}
+      break;
+    case "delete-paid-bill":
+      if(confirm("Hapus riwayat tagihan lunas ini?")){data.paidBills=(data.paidBills||[]).filter(x=>x.id!==id);await saveData(true);renderPage();}
+      break;
+    case "stock-add": {
+      const item=data.inventory.find(x=>x.id===id); if(!item) break;
+      const qty=Number(prompt(`Tambah berapa unit untuk ${item.name}?`,"1"));
+      if(Number.isInteger(qty)&&qty>0){item.stock=Number(item.stock||0)+qty;await saveData(true);renderPage();} else if(qty!==0) alert("Jumlah harus berupa bilangan bulat positif.");
+      break;
+    }
+    case "stock-sell": {
+      const item=data.inventory.find(x=>x.id===id); if(!item) break;
+      const qty=Number(prompt(`Berapa unit ${item.name} yang terjual? Stok tersedia: ${item.stock}`,"1"));
+      if(!Number.isInteger(qty)||qty<=0){alert("Masukkan jumlah unit yang valid.");break;}
+      if(qty>Number(item.stock)){alert("Stok tidak mencukupi.");break;}
+      item.stock-=qty;
+      data.transactions.push({id:makeId(),name:`Penjualan stok: ${item.name} (${qty} unit)`,type:"income",amount:qty*Number(item.price||0),category:"Penjualan barang",date:today(),walletId:data.wallets[0]?.id||""});
+      await saveData(true);renderPage();break;
+    }
+    case "stock-delete":
+      if(confirm("Hapus barang dari daftar stok?")){data.inventory=data.inventory.filter(x=>x.id!==id);await saveData(true);renderPage();}
+      break;
+    case "delete-tx":
+      if (confirm("Hapus transaksi ini?")) {
+        data.transactions = data.transactions.filter(x => x.id !== id);
+        await saveData(true);
+        renderPage();
+      }
+      break;
+
+    case "delete-budget":
+      if (confirm("Hapus anggaran ini?")) {
+        data.budgets = data.budgets.filter(x => x.id !== id);
+        await saveData(true);
+        renderPage();
+      }
+      break;
+
+    case "delete-goal":
+      if (confirm("Hapus target tabungan ini?")) {
+        data.goals = data.goals.filter(x => x.id !== id);
+        await saveData(true);
+        renderPage();
+      }
+      break;
+
+    case "add-goal":
+      openGoalModal(id, "income");
+      break;
+
+    case "spend-goal":
+      openGoalModal(id, "expense");
+      break;
+
+    case "export-month-report": {
+      const month = btn.dataset.month || today().slice(0,7);
+      const rows = data.transactions.filter(t=>String(t.date||"").startsWith(month));
+      exportCSV(rows, `finora-laporan-${month}.csv`);
+      break;
+    }
+    case "export-csv":
+      exportCSV();
+      break;
+
+    case "export-json":
+      exportJSON();
+      break;
+
+    case "password-change":
+      openPasswordModal("change");
+      break;
+  }
+});
+
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT") {
+    user = null;
+    appScreen.classList.add("hidden");
+    authScreen.classList.remove("hidden");
+    setAuthMode("login");
+  }
+
+  if (event === "PASSWORD_RECOVERY") {
+    setTimeout(() => openPasswordModal("recovery"), 0);
+  }
+});
+
+(async () => {
+  // Tangani tautan reset Supabase sebelum menentukan layar login/dashboard.
+  // Tautan dapat memakai PKCE (?code=...) atau token di URL hash.
+  try {
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+    const recoveryHash = hashParams.get("type") === "recovery";
+
+    if (code) {
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      if (exchangeError) console.error("Gagal membuka sesi reset kata sandi:", exchangeError);
+      url.searchParams.delete("code");
+      window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+    }
+
+    const { data: sessionData, error } = await supabase.auth.getSession();
+    if (error) console.error(error);
+    user = sessionData?.session?.user || null;
+    await boot();
+
+    if (recoveryHash || code) {
+      if (user) openPasswordModal("recovery");
+      else notice($("authNotice"), "Tautan reset tidak bisa diverifikasi atau sudah kedaluwarsa. Minta tautan reset baru dan buka dari email terbaru.", "error");
+    }
+  } catch (error) {
+    console.error("Gagal memproses tautan pemulihan:", error);
+    const { data: sessionData } = await supabase.auth.getSession();
+    user = sessionData?.session?.user || null;
+    await boot();
+  }
+})();
+})();
+</script>
+</body>
+</html>
